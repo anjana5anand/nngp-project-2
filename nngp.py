@@ -383,11 +383,22 @@ def _compute_qmap_grid(nonlin_fn,
     def fill_qab_slice(idx):
       return _fill_qab_slice(idx, z1, z2, var_aa, corr_ab, nonlin_fn)
 
+    # Environment fix (Anjana Anand): the original code parallelizes this
+    # map_fn across every CPU core (multiprocessing.cpu_count()), with each
+    # iteration allocating a dense [n_gauss, n_gauss, n_corr] float64 array
+    # (~1GB at this script's default resolution: 501*501*500*8 bytes). On
+    # a memory-constrained Docker Desktop VM, running ~10 of those buffers
+    # concurrently exceeds the container's memory limit and gets killed by
+    # the OOM killer -- this only bites when generating a *new* grid (e.g.
+    # this project's leaky_relu extension); the paper's own tanh/relu
+    # grids ship precomputed in grid_data/ and never hit this path.
+    # Capping parallel_iterations trades some wall-clock time for a
+    # bounded, predictable memory footprint.
     qab = tf.map_fn(
         fill_qab_slice,
         tf.range(n_var),
         dtype=tf.float64,
-        parallel_iterations=multiprocessing.cpu_count())
+        parallel_iterations=min(2, multiprocessing.cpu_count()))
 
     var_grid_pts = tf.reshape(var_aa, [-1])
     corr_grid_pts = tf.reshape(corr_ab, [-1])

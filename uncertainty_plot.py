@@ -104,8 +104,8 @@ flags.DEFINE_string('output_file', '/nngp/output/uncertainty_fig3.png',
                      'Where to save the resulting plot.')
 
 # Paper-style palette: salmon red for Tanh, navy blue for ReLU.
-_COLORS = {'tanh': '#e8746c', 'relu': '#3b5b92'}
-_LABELS = {'tanh': 'Tanh', 'relu': 'ReLU'}
+_COLORS = {'tanh': '#e8746c', 'relu': '#3b5b92', 'leaky_relu': '#4c9a6b'}
+_LABELS = {'tanh': 'Tanh', 'relu': 'ReLU', 'leaky_relu': 'Leaky ReLU'}
 _DATASET_LABELS = {'mnist': 'MNIST', 'cifar10': 'CIFAR'}
 
 
@@ -199,6 +199,21 @@ def compute_uncertainty_and_error(hparams, nonlinearity, train_image,
     nonlin_fn = tf.tanh
   elif nonlinearity == 'relu':
     nonlin_fn = tf.nn.relu
+  elif nonlinearity == 'leaky_relu':
+    # Unique extension (Anjana Anand): a nonlinearity the paper does not
+    # test. nngp.py's kernel computation (_compute_qmap_grid in nngp.py)
+    # is generic over any nonlin_fn -- it evaluates nonlin_fn at Gaussian
+    # integration points and numerically integrates the resulting kernel,
+    # rather than requiring a hand-derived closed form. The paper's own
+    # ReLU/tanh kernels (Sec. 3 and App. B of Lee et al. 2018) are closed
+    # forms that get plugged into this same numerical machinery purely
+    # for speed/precision -- they are not a special code path. Since no
+    # precomputed grid exists for 'leaky_relu' in grid_data/, this
+    # triggers on-the-fly numerical integration the first time it runs:
+    # exactly the "numerically-approximated kernel" extension option
+    # described in the assignment, with no new closed-form derivation
+    # required.
+    nonlin_fn = tf.nn.leaky_relu
   else:
     raise NotImplementedError(nonlinearity)
 
