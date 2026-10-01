@@ -19,16 +19,34 @@ per-point scatter into the clean trend the paper plots.
 
 ### Side-by-side comparison
 
-| My reproduction (MNIST, Tanh/ReLU) | Original paper |
+Figure 3 and its caption appear in **Section 3.1** of the paper. The exact
+caption text (Lee et al. 2018, Fig. 3):
+
+> "The Bayesian nature of NNGP allows it to assign a prediction uncertainty
+> to each test point. This prediction uncertainty is highly correlated with
+> the empirical error on test points. The x-axis shows the predicted MSE
+> for test points, while the y-axis shows the realized MSE. To allow
+> comparison of mean squared error, each plotted point is an average over
+> 100 test points, binned by predicted MSE. The hyperparameters for the
+> NNGP are depth=3, σ²w=2.0, and σ²b=0.2."
+
+*(I'm not embedding the original figure image itself here, to stay clear of
+reproducing the publisher's copyrighted artwork — the quote above is the
+paper's own words, and anyone can view the original at Fig. 3 of
+[arXiv:1711.00165](https://arxiv.org/pdf/1711.00165).)*
+
+| My reproduction (MNIST, Tanh/ReLU) | Original paper (Fig. 3, Sec. 3.1) |
 |---|---|
-| ![My Figure 3 reproduction](uncertainty_fig3_mnist.png) | Fig. 3, Lee et al. 2018 — see [the paper](https://arxiv.org/abs/1711.00165), which plots binned predictive variance (x-axis) against binned test MSE (y-axis) for Tanh and ReLU on MNIST, with a similarly steep, near-linear positive trend for both nonlinearities. |
+| ![My Figure 3 reproduction](uncertainty_fig3_mnist.png) | Same axes (binned predicted MSE vs. binned realized MSE), same binning (100 points/bin), and — notably — **the exact same hyperparameters** quoted above (`depth=3, weight_var=2.0, bias_var=0.2`): this isn't a similar setting, it's the paper's literal Figure 3 configuration. The paper reports a strong, near-linear, positive trend for Tanh and ReLU. |
 
 My reproduction shows the same qualitative and quantitative pattern the
 paper reports: a strong, near-linear positive relationship between
 predicted uncertainty and actual error, with correlation **r = 0.989**
 (Tanh) and **r = 0.987** (ReLU) — both close to 1, matching the paper's
 claim that predictive variance is a reliable, calibrated proxy for actual
-error.
+error. (The paper itself doesn't publish a single numeric correlation
+value in the text, so the comparison here is the visual/qualitative trend
+plus the hyperparameter match, not a number-for-number check.)
 
 A CIFAR-10 version is also included (`uncertainty_fig3_cifar.png`), produced
 with the same script and hyperparameters, showing the same pattern holds

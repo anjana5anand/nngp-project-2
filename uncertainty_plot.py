@@ -14,11 +14,24 @@
 r"""Reproduce Figure 3 of "Deep Neural Networks as Gaussian Processes"
 (Lee et al., ICLR 2018, https://arxiv.org/abs/1711.00165).
 
-Figure 3 shows that the NNGP's per-test-point predictive uncertainty (the
-posterior variance) is highly correlated with its actual squared error, once
-points are binned by predicted variance and averaged in groups of 100 (this
-averaging is what the paper's caption describes, and is what turns a noisy
-per-point scatter into the clean trend shown in the paper).
+Figure 3 and its description live in Section 3.1 ("An analytic expression for
+the mean and variance of a GP... allows us to sanity check the NNGP's
+uncertainty estimates"). Its exact caption: "The Bayesian nature of NNGP
+allows it to assign a prediction uncertainty to each test point. This
+prediction uncertainty is highly correlated with the empirical error on test
+points... each plotted point is an average over 100 test points, binned by
+predicted MSE. The hyperparameters for the NNGP are depth=3, weight_var=2.0,
+and bias_var=0.2" -- which is exactly the --hparams default this script uses
+below, so the figure this script produces is a direct reproduction of that
+exact setting, not just a similar one.
+
+Concretely: the GP posterior mean/variance this script reads off of
+`model.predict(..., get_var=True)` in `compute_uncertainty_and_error` below
+is the closed-form GP predictive distribution mean/variance (computed in
+gpr.py from the NNGP kernel); `bin_by_predicted_mse` implements the "average
+over 100 test points, binned by predicted MSE" step from that caption; and
+`make_figure3` plots exactly the x=predicted MSE, y=realized MSE scatter the
+caption describes, with the correlation coefficient reported in the legend.
 
 Usage (from inside the nngp/ directory, same as run_experiments.py):
 
@@ -172,10 +185,10 @@ def _size_label(n):
 def bin_by_predicted_mse(predicted_mse, actual_mse, bin_size):
   """Sort by predicted MSE and average every `bin_size` points together.
 
-  This mirrors the paper's Figure 3 caption: "each plotted point is an
-  average over 100 test points, binned by predicted MSE." Averaging cancels
-  the large point-to-point noise in a single squared-error draw and reveals
-  the underlying correlation.
+  This implements the binning step described in the Figure 3 caption
+  (Section 3.1): "each plotted point is an average over 100 test points,
+  binned by predicted MSE." Averaging cancels the large point-to-point noise
+  in a single squared-error draw and reveals the underlying correlation.
   """
   order = np.argsort(predicted_mse)
   pred_sorted = predicted_mse[order]
